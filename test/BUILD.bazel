@@ -1,0 +1,12 @@
+load("//src:index.bzl", "sass_binary", "sass_library")
+
+sass_library(
+    name = "b",
+    srcs = ["b.scss"],
+)
+
+sass_binary(
+    name = "a",
+    src = "a.scss",
+    deps = [":b"],
+)

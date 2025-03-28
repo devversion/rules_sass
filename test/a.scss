@@ -1,0 +1,5 @@
+@use './b';
+
+.test {
+    color: b.$color;
+}
