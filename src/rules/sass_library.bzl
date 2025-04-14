@@ -15,16 +15,24 @@
 
 """The `sass_library` rule for grouping and exposing Sass files for compilations."""
 
+load("@aspect_bazel_lib//lib:copy_to_bin.bzl", "COPY_FILE_TO_BIN_TOOLCHAINS", "copy_file_to_bin_action")
 load("@rules_sass//src/shared:collect_transitive.bzl", "collect_transitive_sources")
 load("@rules_sass//src/shared:extensions.bzl", "ALLOWED_SRC_FILE_EXTENSIONS")
 load("@rules_sass//src/shared:providers.bzl", "SassInfo")
 
 def _sass_library_impl(ctx):
     """sass_library collects all transitive sources for given srcs and deps."""
+
+    # We always copy all Sass files to bazel-bin for more predictable file layouts.
+    copied_srcs = []
+    for src in ctx.files.srcs:
+        copied_srcs.append(copy_file_to_bin_action(ctx, src))
+
     transitive_sources = collect_transitive_sources(
-        ctx.files.srcs,
+        copied_srcs,
         ctx.attr.deps,
     )
+
     return [
         SassInfo(transitive_sources = transitive_sources),
         DefaultInfo(
@@ -35,6 +43,7 @@ def _sass_library_impl(ctx):
 
 sass_library = rule(
     implementation = _sass_library_impl,
+    toolchains = COPY_FILE_TO_BIN_TOOLCHAINS,
     attrs = {
         "srcs": attr.label_list(
             doc = "Sass source files",

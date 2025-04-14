@@ -15,6 +15,7 @@
 
 "Compile Sass files to CSS"
 
+load("@aspect_bazel_lib//lib:copy_to_bin.bzl", "COPY_FILE_TO_BIN_TOOLCHAINS", "copy_file_to_bin_action")
 load("@rules_sass//src/shared:collect_transitive.bzl", "collect_transitive_sources")
 load("@rules_sass//src/shared:extensions.bzl", "ALLOWED_SRC_FILE_EXTENSIONS")
 load("@rules_sass//src/shared:providers.bzl", "SassInfo")
@@ -25,6 +26,19 @@ def _run_sass(ctx, input, css_output, compiler_binary, map_output = None):
     # The Sass CLI expects inputs like
     # sass <flags> <input_filename> <output_filename>
     args = ctx.actions.args()
+
+    # Support module mappings by constructing a small symlinked directory
+    # that can be used in combination with `--load-paths` to emulate modules.
+    # The Dart Sass CLI does not support any other way of configuring without calling APIs directly.
+    mapping_symlinks = []
+    for (mapping, target) in ctx.attr.module_mappings.items():
+        symlink = ctx.actions.declare_symlink("%s_sass_mappings/%s" % (ctx.attr.name, mapping))
+        relative_to_pkg = "/".join([".."] * (mapping.count("/") + 1))
+        ctx.actions.symlink(output = symlink, target_path = "%s/%s" % (relative_to_pkg, target))
+        mapping_symlinks.append(symlink)
+
+    if len(mapping_symlinks) > 0:
+        args.add("--load-path=%s/%s/%s_sass_mappings" % (ctx.bin_dir.path, ctx.label.package, ctx.attr.name))
 
     # By default, the CLI of Sass writes the output file even if compilation failures have been
     # reported. We don't want this behavior in the Bazel action, as writing the actual output
@@ -41,8 +55,9 @@ def _run_sass(ctx, input, css_output, compiler_binary, map_output = None):
     elif ctx.attr.sourcemap_embed_sources:
         args.add("--embed-sources")
 
-    # Sources for compilation may exist in the source tree, in bazel-bin, or bazel-genfiles.
-    for prefix in [".", ctx.var["BINDIR"], ctx.var["GENDIR"]]:
+    # Sources for compilation are expected to only exist in the bazel-bin.
+    # We copy all sources via `sass_library` and `sass_binary` to the bin directory.
+    for prefix in ["."]:
         args.add("--load-path=%s/" % prefix)
         for include_path in ctx.attr.include_paths:
             args.add("--load-path=%s/%s" % (prefix, include_path))
@@ -55,7 +70,7 @@ def _run_sass(ctx, input, css_output, compiler_binary, map_output = None):
     ctx.actions.run(
         mnemonic = "SassCompiler",
         executable = compiler_binary,
-        inputs = collect_transitive_sources([input], ctx.attr.deps),
+        inputs = collect_transitive_sources([input] + mapping_symlinks, ctx.attr.deps),
         tools = [compiler_binary],
         arguments = [args],
         outputs = [css_output, map_output] if map_output else [css_output],
@@ -73,7 +88,10 @@ def _sass_binary_impl(ctx):
     compiler_info = ctx.toolchains["@rules_sass//src/toolchain:toolchain_type"].sass_compiler
     compiler_binary = compiler_info.binary
 
-    _run_sass(ctx, ctx.file.src, ctx.outputs.css_file, compiler_binary, map_file)
+    # We always copy all Sass files to bazel-bin for more predictable file layouts.
+    copied_src = copy_file_to_bin_action(ctx, ctx.file.src)
+
+    _run_sass(ctx, copied_src, ctx.outputs.css_file, compiler_binary, map_file)
     return DefaultInfo(runfiles = ctx.runfiles(files = outputs))
 
 def _sass_binary_outputs(src, output_name, output_dir, sourcemap):
@@ -142,6 +160,11 @@ sass_binary = rule(
             providers = [SassInfo],
             allow_files = False,
         ),
+        "module_mappings": attr.string_dict(
+            doc = """Dictionary of module names to their package-relative folders.
+              This enables module mappings as with a custom loader but doesn't require slower JavaScript Sass.
+            """,
+        ),
     },
-    toolchains = ["@rules_sass//src/toolchain:toolchain_type"],
+    toolchains = ["@rules_sass//src/toolchain:toolchain_type"] + COPY_FILE_TO_BIN_TOOLCHAINS,
 )

@@ -1,0 +1,10 @@
+load("//src:index.bzl", "sass_binary")
+
+sass_binary(
+    name = "material",
+    src = "index.scss",
+    module_mappings = {
+        "@angular/cdk": "../cdk",
+    },
+    deps = ["//test/mappings/cdk"],
+)
