@@ -57,7 +57,7 @@ def _run_sass(ctx, input, css_output, compiler_binary, map_output = None):
 
     # Sources for compilation are expected to only exist in the bazel-bin.
     # We copy all sources via `sass_library` and `sass_binary` to the bin directory.
-    for prefix in ["."]:
+    for prefix in [ctx.bin_dir.path]:
         args.add("--load-path=%s/" % prefix)
         for include_path in ctx.attr.include_paths:
             args.add("--load-path=%s/%s" % (prefix, include_path))
