@@ -8,4 +8,5 @@ environment:
 # Add regular dependencies here.
 dependencies:
   sass_api: ^15.3.3
+  sprintf: ^7.0.0
   # path: ^1.8.0

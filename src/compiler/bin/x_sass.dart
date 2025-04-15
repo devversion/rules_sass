@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:sprintf/sprintf.dart';
 
 import 'package:sass/src/executable/concurrent.dart';
 import 'package:sass/src/executable/options.dart';
@@ -58,11 +59,8 @@ final class ModuleMappingImporter extends Importer {
     final target = match != null ? this.mappings[match] as String? : null;
 
     if (match != null && rest != null && target != null) {
-      url = Uri.file(p.join(target, rest));
+      url = Uri.file(p.absolute(p.normalize(sprintf("%s/%s", [target, rest]))));
     }
-
-    print(sortedMappings);
-    print(url);
 
     return FilesystemImporter.noLoadPath.canonicalize(url);
   }

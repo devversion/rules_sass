@@ -21,15 +21,15 @@ PLATFORMS = {
 
 VERSION = {
     "linux_amd64": {
-        "file": "@rules_sass//src/compiler/dist:x_sass_linux_x64",
+        "file": "@rules_sass//src/compiler/built:sass_linux_x64",
         "sha256": "",
     },
     "darwin_amd64": {
-        "file": "@rules_sass//src/compiler/dist:x_sass_mac_x64",
+        "file": "@rules_sass//src/compiler/built:sass_mac_x64",
         "sha256": "",
     },
     "darwin_arm64": {
-        "file": "@rules_sass//src/compiler/dist:x_sass_linux_arm",
+        "file": "@rules_sass//src/compiler/built:sass_mac_arm",
         "sha256": "",
     },
 }
