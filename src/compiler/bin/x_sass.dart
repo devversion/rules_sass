@@ -18,6 +18,7 @@ void main(List<String> arguments) async {
       ImportCache(
         importers: [
           new ModuleMappingImporter(await File(mappingsFile).readAsString()),
+          ...opts.pkgImporters,
           FilesystemImporter.noLoadPath,
         ],
         loadPaths: opts.loadPaths,
@@ -50,16 +51,21 @@ final class ModuleMappingImporter extends Importer {
 
   @override
   Uri? canonicalize(Uri url) {
-    if (url.scheme == 'file') return null;
+    if (url.scheme == 'file')
+      return FilesystemImporter.noLoadPath.canonicalize(url);
+    ;
 
-    final match = this.sortedMappings?.firstWhere(
-      (m) => url.toString().startsWith(m),
-    );
-    final rest = match != null ? url.toString().substring(match.length) : null;
-    final target = match != null ? this.mappings[match] as String? : null;
+    final match = this._matchingMapping(url.toString());
+    if (match == null) {
+      return FilesystemImporter.noLoadPath.canonicalize(url);
+    }
 
-    if (match != null && rest != null && target != null) {
+    final rest = url.toString().substring(match.length);
+    final String? target = this.mappings[match];
+
+    if (target != null) {
       url = Uri.file(p.absolute(p.normalize(sprintf("%s/%s", [target, rest]))));
+      return FilesystemImporter.noLoadPath.canonicalize(url);
     }
 
     return FilesystemImporter.noLoadPath.canonicalize(url);
@@ -69,7 +75,19 @@ final class ModuleMappingImporter extends Importer {
   DateTime modificationTime(Uri url) =>
       FilesystemImporter.noLoadPath.modificationTime(url);
   bool couldCanonicalize(Uri url, Uri canonicalUrl) =>
+      this._matchingMapping(url.toString()) != null &&
       FilesystemImporter.noLoadPath.couldCanonicalize(url, canonicalUrl);
   bool isNonCanonicalScheme(String scheme) =>
       FilesystemImporter.noLoadPath.isNonCanonicalScheme(scheme);
+
+  String? _matchingMapping(String str) {
+    final match = this.sortedMappings?.firstWhere(
+      (m) => str.startsWith(m),
+      orElse: () => "",
+    );
+    if (match == "" || match == null) {
+      return null;
+    }
+    return match;
+  }
 }

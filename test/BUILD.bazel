@@ -2,11 +2,15 @@ load("//src:index.bzl", "sass_binary", "sass_library")
 
 sass_library(
     name = "b",
-    srcs = ["b.scss"],
+    srcs = [
+        "b.scss",
+        "load_path/c.scss",
+    ],
 )
 
 sass_binary(
     name = "a",
     src = "a.scss",
+    include_paths = ["./test/load_path/"],
     deps = [":b"],
 )
