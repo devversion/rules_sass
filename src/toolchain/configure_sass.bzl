@@ -1,10 +1,4 @@
-def _download_sass_impl(rctx):
-    rctx.download_and_extract(
-        url = rctx.attr.url,
-        sha256 = rctx.attr.sha256,
-        output = "",
-    )
-
+def _configure_sass_impl(rctx):
     rctx.file(
         "BUILD.bazel",
         content = """
@@ -14,7 +8,7 @@ package(default_visibility = ["//visibility:public"])
 
 sass_compiler(
     name = "binary",
-    binary = "dart-sass/sass",
+    binary = "{compiler_file}",
 )
 
 toolchain(
@@ -25,14 +19,15 @@ toolchain(
     toolchain_type = "@rules_sass//src/toolchain:toolchain_type",
 )
 """.format(
+            compiler_file = rctx.attr.file,
             compatible_with = ["@%s//%s:%s" % (c.workspace_name, c.package, c.name) for c in rctx.attr.constraints],
         ),
     )
 
-download_sass = repository_rule(
-    implementation = _download_sass_impl,
+configure_sass = repository_rule(
+    implementation = _configure_sass_impl,
     attrs = {
-        "url": attr.string(),
+        "file": attr.string(mandatory = True),
         "sha256": attr.string(mandatory = True),
         "constraints": attr.label_list(mandatory = True),
     },
