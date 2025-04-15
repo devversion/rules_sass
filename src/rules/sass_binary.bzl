@@ -23,22 +23,23 @@ load("@rules_sass//src/shared:providers.bzl", "SassInfo")
 def _run_sass(ctx, input, css_output, compiler_binary, map_output = None):
     """run_sass performs an action to compile a single Sass file into CSS."""
 
+    # Create mappings manifest for our custom Dart importer.
+    # We also adjust the package-relative mappings to execroot paths.
+    mappings_config = ctx.actions.declare_file("%s_mappings.json" % ctx.attr.name)
+    module_mappings = {}
+    for (key, value) in ctx.attr.module_mappings.items():
+        module_mappings[key] = "%s/%s/%s" % (ctx.bin_dir.path, ctx.label.package, value)
+    ctx.actions.write(
+        output = mappings_config,
+        content = json.encode(module_mappings),
+    )
+
     # The Sass CLI expects inputs like
     # sass <flags> <input_filename> <output_filename>
     args = ctx.actions.args()
 
-    # Support module mappings by constructing a small symlinked directory
-    # that can be used in combination with `--load-paths` to emulate modules.
-    # The Dart Sass CLI does not support any other way of configuring without calling APIs directly.
-    mapping_symlinks = []
-    for (mapping, target) in ctx.attr.module_mappings.items():
-        symlink = ctx.actions.declare_symlink("%s_sass_mappings/%s" % (ctx.attr.name, mapping))
-        relative_to_pkg = "/".join([".."] * (mapping.count("/") + 1))
-        ctx.actions.symlink(output = symlink, target_path = "%s/%s" % (relative_to_pkg, target))
-        mapping_symlinks.append(symlink)
-
-    if len(mapping_symlinks) > 0:
-        args.add("--load-path=%s/%s/%s_sass_mappings" % (ctx.bin_dir.path, ctx.label.package, ctx.attr.name))
+    # Add module mappings path as first argument to our custom Sass binary.
+    args.add(mappings_config.path)
 
     # By default, the CLI of Sass writes the output file even if compilation failures have been
     # reported. We don't want this behavior in the Bazel action, as writing the actual output
@@ -70,7 +71,7 @@ def _run_sass(ctx, input, css_output, compiler_binary, map_output = None):
     ctx.actions.run(
         mnemonic = "SassCompiler",
         executable = compiler_binary,
-        inputs = collect_transitive_sources([input] + mapping_symlinks, ctx.attr.deps),
+        inputs = collect_transitive_sources([input, mappings_config], ctx.attr.deps),
         tools = [compiler_binary],
         arguments = [args],
         outputs = [css_output, map_output] if map_output else [css_output],
