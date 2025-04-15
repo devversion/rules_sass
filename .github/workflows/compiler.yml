@@ -1,0 +1,37 @@
+name: Compiler Binaries
+
+on:
+  push:
+    paths-ignore:
+      - src/compiler/built/**
+
+jobs:
+  build:
+    permissions:
+      contents: write
+      pull-requests: write
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-latest]
+        include:
+          - os: ubuntu-latest
+            bin_name: sass_linux_x64
+          - os: macos-13
+            bin_name: sass_mac_x64
+          - os: macos-latest
+            bin_name: sass_mac_arm
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: mkdir -p src/compiler/built/
+      - run: dart compile exe ./src/compiler/bin/x_sass.dart -o src/compiler/built/${{ matrix.bin_name }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          title: ${{matrix.bin_name}} binary update
+          branch: binary-updates-${{matrix.bin_name}}
+          reviewers: devversion
