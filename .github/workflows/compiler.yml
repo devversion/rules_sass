@@ -12,6 +12,7 @@ jobs:
       pull-requests: write
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-13, macos-latest]
         include:
@@ -38,6 +39,7 @@ jobs:
           branch: binary-updates-${{matrix.bin_name}}
           reviewers: devversion
       - uses: peter-evans/enable-pull-request-automerge@v3
+        if: steps.create_pr.outputs.pull-request-operation != 'none'
         with:
           pull-request-number: ${{steps.create_pr.outputs.pull-request-number}}
           merge-method: rebase
