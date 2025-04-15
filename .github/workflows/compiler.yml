@@ -31,8 +31,12 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
+        id: create_pr
         with:
           title: ${{matrix.bin_name}} binary update
           commit-message: ${{matrix.bin_name}} binary update
           branch: binary-updates-${{matrix.bin_name}}
           reviewers: devversion
+      - uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          pull-request-number: ${{steps.create_pr.outputs.pull-request-number}}
