@@ -45,8 +45,9 @@ final class ModuleMappingImporter extends Importer {
 
   ModuleMappingImporter(String mappingsFileContents) {
     this.mappings = jsonDecode(mappingsFileContents);
+    // Sort to have longest mappings first.
     this.sortedMappings =
-        this.mappings.keys.toList()..sort((a, b) => a.length - b.length);
+        this.mappings.keys.toList()..sort((a, b) => b.length - a.length);
   }
 
   @override
