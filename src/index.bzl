@@ -15,6 +15,8 @@
 
 load("@rules_sass//src/rules:sass_binary.bzl", _sass_binary = "sass_binary")
 load("@rules_sass//src/rules:sass_library.bzl", _sass_library = "sass_library")
+load("@rules_sass//src/rules:npm_sass_library.bzl", _npm_sass_library = "npm_sass_library")
 
 sass_binary = _sass_binary
 sass_library = _sass_library
+npm_sass_library = _npm_sass_library

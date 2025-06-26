@@ -16,17 +16,17 @@
 "Compile Sass files to CSS"
 
 load("@aspect_bazel_lib//lib:copy_to_bin.bzl", "COPY_FILE_TO_BIN_TOOLCHAINS", "copy_file_to_bin_action")
-load("@rules_sass//src/shared:collect_transitive.bzl", "collect_transitive_sources")
+load("@rules_sass//src/shared:collect_transitive.bzl", "collect_transitive_sources", "collect_transitive_mappings")
 load("@rules_sass//src/shared:extensions.bzl", "ALLOWED_SRC_FILE_EXTENSIONS")
 load("@rules_sass//src/shared:providers.bzl", "SassInfo")
 
 def _run_sass(ctx, input, css_output, compiler_binary, map_output = None):
     """run_sass performs an action to compile a single Sass file into CSS."""
-
     # Create mappings manifest for our custom Dart importer.
     # We also adjust the package-relative mappings to execroot paths.
     mappings_config = ctx.actions.declare_file("%s_mappings.json" % ctx.attr.name)
-    module_mappings = {}
+    # Set initial module_mappings using the transitive mappings from dependency mappings.
+    module_mappings = collect_transitive_mappings(ctx.attr.deps)
     for (key, value) in ctx.attr.module_mappings.items():
         module_mappings[key] = "%s/%s/%s" % (ctx.bin_dir.path, ctx.label.package, value)
     ctx.actions.write(
