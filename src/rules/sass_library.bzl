@@ -16,7 +16,7 @@
 """The `sass_library` rule for grouping and exposing Sass files for compilations."""
 
 load("@aspect_bazel_lib//lib:copy_to_bin.bzl", "COPY_FILE_TO_BIN_TOOLCHAINS", "copy_file_to_bin_action")
-load("@rules_sass//src/shared:collect_transitive.bzl", "collect_transitive_sources")
+load("@rules_sass//src/shared:collect_transitive.bzl", "collect_transitive_sources", "collect_transitive_mappings")
 load("@rules_sass//src/shared:extensions.bzl", "ALLOWED_SRC_FILE_EXTENSIONS")
 load("@rules_sass//src/shared:providers.bzl", "SassInfo")
 
@@ -34,7 +34,10 @@ def _sass_library_impl(ctx):
     )
 
     return [
-        SassInfo(transitive_sources = transitive_sources),
+        SassInfo(
+            transitive_sources = transitive_sources,
+            module_mappings = collect_transitive_mappings(ctx.attr.deps)
+        ),
         DefaultInfo(
             files = transitive_sources,
             runfiles = ctx.runfiles(transitive_files = transitive_sources),
