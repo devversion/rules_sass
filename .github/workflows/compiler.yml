@@ -22,6 +22,8 @@ jobs:
             bin_name: sass_mac_x64
           - os: macos-latest
             bin_name: sass_mac_arm
+          - os: ubuntu-24.04-arm
+            bin_name: sass_linux_arm
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
