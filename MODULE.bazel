@@ -3,10 +3,11 @@ module(name = "rules_sass")
 
 sass = use_extension("@rules_sass//src/toolchain:extensions.bzl", "sass")
 toolchains = sass.toolchain()
-use_repo(sass, "linux_amd64_sass", "darwin_amd64_sass", "darwin_arm64_sass")
+use_repo(sass, "linux_amd64_sass", "darwin_amd64_sass", "darwin_arm64_sass", "linux_arm64_sass")
 
 register_toolchains(
-  "@linux_amd64_sass//:toolchain", 
+  "@linux_amd64_sass//:toolchain",
+  "@linux_arm64_sass//:toolchain",
   "@darwin_amd64_sass//:toolchain",
   "@darwin_arm64_sass//:toolchain",
 )

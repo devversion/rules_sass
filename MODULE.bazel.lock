@@ -86,7 +86,7 @@
   "moduleExtensions": {
     "//src/toolchain:extensions.bzl%sass": {
       "general": {
-        "bzlTransitiveDigest": "RA58Nyrsn03Z5YmQnpmBw3mqlVck++XIrx34amsqU/E=",
+        "bzlTransitiveDigest": "10cZTKQVZIj08X77vULiRorY74wkL/SB/HDlxb7Qk6U=",
         "usagesDigest": "oQcm9bOHF1y5woBZYpPfVxNrloR0bJEuj1Dcl2C0Oe4=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
